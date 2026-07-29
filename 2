@@ -1,0 +1,51 @@
+import axios from "axios";
+
+export default async function handler(req, res) {
+  // Abilita CORS per Webador
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method !== "GET") {
+    return res.status(405).json({
+      success: false,
+      message: "Metodo non consentito"
+    });
+  }
+
+  try {
+    const API_KEY = process.env.API_TENNIS_KEY;
+
+    if (!API_KEY) {
+      return res.status(500).json({
+        success: false,
+        message: "API_TENNIS_KEY non configurata su Vercel"
+      });
+    }
+
+    const url =
+      `https://api.api-tennis.com/tennis/?method=get_livescore&APIkey=${API_KEY}`;
+
+    const response = await axios.get(url, {
+      timeout: 15000
+    });
+
+    const result = response.data?.result || [];
+
+    return res.status(200).json({
+      success: true,
+      updated: new Date().toISOString(),
+      total: result.length,
+      matches: result
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: "Errore durante il recupero dei risultati LIVE",
+      error: error.message
+    });
+
+  }
+}
